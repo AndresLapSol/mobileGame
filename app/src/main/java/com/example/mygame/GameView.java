@@ -1,6 +1,7 @@
 package com.example.mygame;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -20,14 +21,13 @@ public class GameView extends SurfaceView implements Runnable {
     private SurfaceHolder surfaceHolder;
     private Enemy[] enemies;
     private int enemyCount = 3;
-    private ArrayList<Star> stars = new ArrayList<Star>();
-
-    // Referencia a GameActivity
-    private GameActivity gameActivity;
+    private ArrayList<Star> stars = new ArrayList<>();
+    private ArrayList<Bullet> bullets = new ArrayList<>(); // Lista de balas activas
+    private long lastShotTime = 0; // Tiempo del último disparo
+    private static final long SHOT_INTERVAL = 500; // Intervalo de disparo en milisegundos (500 ms = 0.5 segundos)
 
     public GameView(Context context, int screenX, int screenY, GameActivity gameActivity) {
         super(context);
-        this.gameActivity = gameActivity; // Inicializar la referencia a GameActivity
 
         player = new Player(context, screenX, screenY);
         surfaceHolder = getHolder();
@@ -59,17 +59,55 @@ public class GameView extends SurfaceView implements Runnable {
     private void update() {
         player.update();
 
-        // Actualizar la posición de los enemigos
-        for (int i = 0; i < enemyCount; i++) {
-            enemies[i].update();
+        // Disparar balas constantemente
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - lastShotTime >= SHOT_INTERVAL) {
+            bullets.add(player.shoot(getContext())); // Disparar una nueva bala
+            lastShotTime = currentTime; // Actualizar el tiempo del último disparo
+        }
 
-            // Verificar colisión entre el jugador y un enemigo
-            if (Rect.intersects(player.getDetectCollision(), enemies[i].getDetectCollision())) {
-                // Detener el juego
-                playing = false;
+        // Actualizar balas
+        for (int i = 0; i < bullets.size(); i++) {
+            Bullet bullet = bullets.get(i);
+            if (bullet.isActive()) {
+                bullet.update();
+            } else {
+                bullets.remove(i); // Eliminar balas inactivas
+                i--;
+            }
+        }
 
+        // Actualizar enemigos
+        for (int i = 0; i < enemies.length; i++) {
+            if (enemies[i].isActive()) {
+                enemies[i].update();
+            } else {
+                // Si el enemigo está inactivo, puedes eliminarlo o reiniciarlo
+                enemies[i] = new Enemy(getContext(), getWidth(), getHeight());
+            }
+        }
+
+        // Verificar colisiones entre balas y enemigos
+        for (int i = 0; i < bullets.size(); i++) {
+            Bullet bullet = bullets.get(i);
+            if (bullet.isActive()) {
+                for (int j = 0; j < enemies.length; j++) {
+                    if (enemies[j].isActive() && Rect.intersects(bullet.getDetectCollision(), enemies[j].getDetectCollision())) {
+                        // Colisión detectada: desactivar la bala y el enemigo
+                        bullet.setInactive();
+                        enemies[j].setInactive();
+                        break; // Salir del bucle de enemigos para esta bala
+                    }
+                }
+            }
+        }
+
+        // Verificar colisión entre el jugador y un enemigo
+        for (int i = 0; i < enemies.length; i++) {
+            if (enemies[i].isActive() && Rect.intersects(player.getDetectCollision(), enemies[i].getDetectCollision())) {
                 // Iniciar la actividad de Game Over
-                gameActivity.gameOver();
+                Intent gameOverIntent = new Intent(getContext(), GameOverActivity.class);
+                getContext().startActivity(gameOverIntent);
                 return; // Salir del método update para evitar más actualizaciones
             }
         }
@@ -95,13 +133,20 @@ public class GameView extends SurfaceView implements Runnable {
                 canvas.drawBitmap(enemies[i].getBitmap(), enemies[i].getX(), enemies[i].getY(), paint);
             }
 
+            // Dibujar balas
+            for (Bullet bullet : bullets) {
+                if (bullet.isActive()) {
+                    canvas.drawBitmap(bullet.getBitmap(), bullet.getX(), bullet.getY(), paint);
+                }
+            }
+
             surfaceHolder.unlockCanvasAndPost(canvas);
         }
     }
 
     private void control() {
         try {
-            gameThread.sleep(17);
+            gameThread.sleep(17); // ~60 FPS
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

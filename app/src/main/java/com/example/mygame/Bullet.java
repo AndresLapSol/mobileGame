@@ -56,4 +56,10 @@ public class Bullet {
     public Rect getDetectCollision() {
         return detectCollision;
     }
+
+    // Nuevo método para desactivar el enemigo
+    public void setInactive() {
+        isActive = false;
+    }
+
 }
