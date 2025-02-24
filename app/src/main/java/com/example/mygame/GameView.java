@@ -25,9 +25,21 @@ public class GameView extends SurfaceView implements Runnable {
     private ArrayList<Bullet> bullets = new ArrayList<>(); // Lista de balas activas
     private long lastShotTime = 0; // Tiempo del último disparo
     private static final long SHOT_INTERVAL = 500; // Intervalo de disparo en milisegundos (500 ms = 0.5 segundos)
+    private long tiempoInicio;
+
+    //Definir el objeto "explosion"
+    private Boom boom;
+
+    //Definir el objeto "Boss"
+    private Boss boss;
+
+
 
     public GameView(Context context, int screenX, int screenY, GameActivity gameActivity) {
         super(context);
+
+        tiempoInicio = System.currentTimeMillis(); // Guarda el tiempo de inicio
+
 
         player = new Player(context, screenX, screenY);
         surfaceHolder = getHolder();
@@ -45,6 +57,12 @@ public class GameView extends SurfaceView implements Runnable {
         for (int i = 0; i < enemyCount; i++) {
             enemies[i] = new Enemy(context, screenX, screenY);
         }
+
+        //Inicializar Explosion
+        boom = new Boom(context);
+
+        // Inicializar el BOSS
+        boss = new Boss(context, screenX, screenY); // Asegúrate de agregar esto aquí
     }
 
     @Override
@@ -58,6 +76,10 @@ public class GameView extends SurfaceView implements Runnable {
 
     private void update() {
         player.update();
+
+        //Poniendo la explosion fuera de la pantalla
+        boom.setX(-250);
+        boom.setY(-250);
 
         // Disparar balas constantemente
         long currentTime = System.currentTimeMillis();
@@ -77,10 +99,11 @@ public class GameView extends SurfaceView implements Runnable {
             }
         }
 
+        float speedMultiplier = getSpeedMultiplier();
         // Actualizar enemigos
         for (int i = 0; i < enemies.length; i++) {
             if (enemies[i].isActive()) {
-                enemies[i].update();
+                enemies[i].update(speedMultiplier);
             } else {
                 // Si el enemigo está inactivo, puedes eliminarlo o reiniciarlo
                 enemies[i] = new Enemy(getContext(), getWidth(), getHeight());
@@ -96,6 +119,11 @@ public class GameView extends SurfaceView implements Runnable {
                         // Colisión detectada: desactivar la bala y el enemigo
                         bullet.setInactive();
                         enemies[j].setInactive();
+
+                        //Mover la explosion al sitio de colision
+                        boom.setX(enemies[j].getX());
+                        boom.setY(enemies[j].getY());
+
                         break; // Salir del bucle de enemigos para esta bala
                     }
                 }
@@ -111,6 +139,13 @@ public class GameView extends SurfaceView implements Runnable {
                 return; // Salir del método update para evitar más actualizaciones
             }
         }
+
+        long tiempoJugado = (System.currentTimeMillis() - tiempoInicio) / 1000; // Convierte a segundos
+        if (tiempoJugado >= 60 && !boss.isActive()) {
+            boss.activate();
+        }
+        boss.update();
+
     }
 
     private void draw() {
@@ -140,9 +175,32 @@ public class GameView extends SurfaceView implements Runnable {
                 }
             }
 
+            //Dibujar Explosion
+            canvas.drawBitmap(
+                    boom.getBitmap(),
+                    boom.getX(),
+                    boom.getY(),
+                    paint
+            );
+
+            if (boss.isActive()) {
+                canvas.drawBitmap(boss.getBitmap(), boss.getX(), boss.getY(), paint);
+            }
+
+            // Calcular el tiempo jugado en segundos
+            long tiempoJugado = (System.currentTimeMillis() - tiempoInicio) / 1000;
+            long minutos = tiempoJugado / 60;
+            long segundos = tiempoJugado % 60;
+
+            // Dibujar el tiempo en pantalla
+            paint.setColor(Color.WHITE);
+            paint.setTextSize(50);
+            canvas.drawText("Tiempo: " + minutos + "m " + segundos + "s", 50, 100, paint);
+
             surfaceHolder.unlockCanvasAndPost(canvas);
         }
     }
+
 
     private void control() {
         try {
@@ -186,5 +244,10 @@ public class GameView extends SurfaceView implements Runnable {
                 break;
         }
         return true;
+    }
+
+    private float getSpeedMultiplier() {
+        long tiempoJugado = (System.currentTimeMillis() - tiempoInicio) / 1000; // Tiempo en segundos
+        return 1.0f + (tiempoJugado / 60.0f); // Aumenta la velocidad cada 30 segundos
     }
 }

@@ -32,8 +32,8 @@ public class Enemy {
         isActive = true; // El enemigo está activo por defecto
     }
 
-    public void update() {
-        y += speed;
+    public void update(float speedMultiplier) {
+        y += speed * speedMultiplier;
 
         if (y > maxY) {
             Random generator = new Random();
