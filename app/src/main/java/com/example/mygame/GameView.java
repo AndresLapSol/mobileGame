@@ -6,6 +6,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -39,7 +40,7 @@ public class GameView extends SurfaceView implements Runnable {
         super(context);
 
         tiempoInicio = System.currentTimeMillis(); // Guarda el tiempo de inicio
-
+        Log.d("GameView", "tiempoInicio: " + tiempoInicio);
 
         player = new Player(context, screenX, screenY);
         surfaceHolder = getHolder();
@@ -67,6 +68,7 @@ public class GameView extends SurfaceView implements Runnable {
 
     @Override
     public void run() {
+        Log.d("GameView", "run ejecutado");
         while (playing) {
             update();
             draw();
@@ -75,6 +77,7 @@ public class GameView extends SurfaceView implements Runnable {
     }
 
     private void update() {
+        Log.d("GameView", "update ejecutado");
         player.update();
 
         //Poniendo la explosion fuera de la pantalla
@@ -110,6 +113,45 @@ public class GameView extends SurfaceView implements Runnable {
             }
         }
 
+        // **Actualizar Boss**
+        if (boss != null && boss.isActive() && !boss.isDefeated()) { // Comprobar si el boss esta derrotado
+            boss.update();
+            Log.d("GameView", "boss.isActive");
+
+            // Verificar colisiones entre balas y el Boss
+            for (int i = 0; i < bullets.size(); i++) {
+                Bullet bullet = bullets.get(i);
+                if (bullet.isActive() && Rect.intersects(bullet.getDetectCollision(), boss.getDetectCollision())) {
+                    bullet.setInactive(); // Desactivar la bala
+                    boss.takeDamage(); // Reducir la vida del Boss
+
+                    // Mover la explosión al sitio de colisión
+                    boom.setX(boss.getX());
+                    boom.setY(boss.getY());
+
+                    if (boss.getHealth() <= 0) {
+                        // El Boss ha sido derrotado
+                        boss.setInactive(); // Desactivar al Boss
+                        // Aquí puedes agregar una animación o lógica adicional
+                    }
+                    break; // Salir del bucle de balas para esta colisión
+                }
+            }
+        }
+
+        // Verificar colisión entre el jugador y un enemigo
+        for (int i = 0; i < enemies.length; i++) {
+            if (enemies[i].isActive() && Rect.intersects(player.getDetectCollision(), enemies[i].getDetectCollision())) {
+                // Iniciar la actividad de Game Over
+                Intent gameOverIntent = new Intent(getContext(), GameOverActivity.class);
+                getContext().startActivity(gameOverIntent);
+                return; // Salir del método update para evitar más actualizaciones
+            }
+        }
+
+
+
+
         // Verificar colisiones entre balas y enemigos
         for (int i = 0; i < bullets.size(); i++) {
             Bullet bullet = bullets.get(i);
@@ -141,10 +183,10 @@ public class GameView extends SurfaceView implements Runnable {
         }
 
         long tiempoJugado = (System.currentTimeMillis() - tiempoInicio) / 1000; // Convierte a segundos
+        Log.d("GameView", "Tiempo jugado: " + tiempoJugado);
         if (tiempoJugado >= 60 && !boss.isActive()) {
             boss.activate();
         }
-        boss.update();
 
     }
 
