@@ -28,19 +28,30 @@ public class GameView extends SurfaceView implements Runnable {
     private static final long SHOT_INTERVAL = 500; // Intervalo de disparo en milisegundos (500 ms = 0.5 segundos)
     private long tiempoInicio;
 
-    //Definir el objeto "explosion"
+    // Definir el objeto "explosion"
     private Boom boom;
 
-    //Definir el objeto "Boss"
+    // Definir el objeto "Boss"
     private Boss boss;
 
+    // Variables para contar enemigos y bosses derrotados
+    private int enemiesDefeated = 0;
+    private int bossesDefeated = 0;
 
+    private ArrayList<Integer> bossActivationTimes; // Lista de tiempos de activación del Boss (en segundos)
+    private int currentBossActivationIndex = 0; // Índice para rastrear el próximo tiempo de activación
 
     public GameView(Context context, int screenX, int screenY, GameActivity gameActivity) {
         super(context);
 
         tiempoInicio = System.currentTimeMillis(); // Guarda el tiempo de inicio
         Log.d("GameView", "tiempoInicio: " + tiempoInicio);
+
+        // Inicializar la lista de tiempos de activación del Boss (en segundos)
+        bossActivationTimes = new ArrayList<>();
+        bossActivationTimes.add(10);  // Segundo 10
+        bossActivationTimes.add(30); // Segundo 30
+        bossActivationTimes.add(50); // Segundo 50
 
         player = new Player(context, screenX, screenY);
         surfaceHolder = getHolder();
@@ -59,7 +70,7 @@ public class GameView extends SurfaceView implements Runnable {
             enemies[i] = new Enemy(context, screenX, screenY);
         }
 
-        //Inicializar Explosion
+        // Inicializar Explosion
         boom = new Boom(context);
 
         // Inicializar el BOSS
@@ -80,7 +91,7 @@ public class GameView extends SurfaceView implements Runnable {
         Log.d("GameView", "update ejecutado");
         player.update();
 
-        //Poniendo la explosion fuera de la pantalla
+        // Poniendo la explosion fuera de la pantalla
         boom.setX(-250);
         boom.setY(-250);
 
@@ -132,7 +143,8 @@ public class GameView extends SurfaceView implements Runnable {
                     if (boss.getHealth() <= 0) {
                         // El Boss ha sido derrotado
                         boss.setInactive(); // Desactivar al Boss
-                        // Aquí puedes agregar una animación o lógica adicional
+                        bossesDefeated++; // Incrementar el contador de bosses derrotados
+                        Log.d("GameView", "Boss derrotado");
                     }
                     break; // Salir del bucle de balas para esta colisión
                 }
@@ -144,13 +156,13 @@ public class GameView extends SurfaceView implements Runnable {
             if (enemies[i].isActive() && Rect.intersects(player.getDetectCollision(), enemies[i].getDetectCollision())) {
                 // Iniciar la actividad de Game Over
                 Intent gameOverIntent = new Intent(getContext(), GameOverActivity.class);
+                gameOverIntent.putExtra("enemiesDefeated", enemiesDefeated);
+                gameOverIntent.putExtra("bossesDefeated", bossesDefeated);
+                gameOverIntent.putExtra("timeSurvived", (System.currentTimeMillis() - tiempoInicio) / 1000);
                 getContext().startActivity(gameOverIntent);
                 return; // Salir del método update para evitar más actualizaciones
             }
         }
-
-
-
 
         // Verificar colisiones entre balas y enemigos
         for (int i = 0; i < bullets.size(); i++) {
@@ -161,8 +173,9 @@ public class GameView extends SurfaceView implements Runnable {
                         // Colisión detectada: desactivar la bala y el enemigo
                         bullet.setInactive();
                         enemies[j].setInactive();
+                        enemiesDefeated++; // Incrementar el contador de enemigos derrotados
 
-                        //Mover la explosion al sitio de colision
+                        // Mover la explosion al sitio de colision
                         boom.setX(enemies[j].getX());
                         boom.setY(enemies[j].getY());
 
@@ -177,17 +190,25 @@ public class GameView extends SurfaceView implements Runnable {
             if (enemies[i].isActive() && Rect.intersects(player.getDetectCollision(), enemies[i].getDetectCollision())) {
                 // Iniciar la actividad de Game Over
                 Intent gameOverIntent = new Intent(getContext(), GameOverActivity.class);
+                gameOverIntent.putExtra("enemiesDefeated", enemiesDefeated);
+                gameOverIntent.putExtra("bossesDefeated", bossesDefeated);
+                gameOverIntent.putExtra("timeSurvived", (System.currentTimeMillis() - tiempoInicio) / 1000);
                 getContext().startActivity(gameOverIntent);
                 return; // Salir del método update para evitar más actualizaciones
             }
         }
 
+        // Verificar si es hora de activar al Boss
         long tiempoJugado = (System.currentTimeMillis() - tiempoInicio) / 1000; // Convierte a segundos
         Log.d("GameView", "Tiempo jugado: " + tiempoJugado);
-        if (tiempoJugado >= 60 && !boss.isActive()) {
-            boss.activate();
+        if (currentBossActivationIndex < bossActivationTimes.size()) {
+            int nextActivationTime = bossActivationTimes.get(currentBossActivationIndex);
+            if (tiempoJugado >= nextActivationTime && !boss.isActive()) {
+                boss.activate(); // Reiniciar y activar al Boss
+                currentBossActivationIndex++; // Pasar al siguiente tiempo de activación
+                Log.d("GameView", "Boss activado en el segundo: " + nextActivationTime);
+            }
         }
-
     }
 
     private void draw() {
@@ -217,7 +238,7 @@ public class GameView extends SurfaceView implements Runnable {
                 }
             }
 
-            //Dibujar Explosion
+            // Dibujar Explosion
             canvas.drawBitmap(
                     boom.getBitmap(),
                     boom.getX(),
@@ -242,7 +263,6 @@ public class GameView extends SurfaceView implements Runnable {
             surfaceHolder.unlockCanvasAndPost(canvas);
         }
     }
-
 
     private void control() {
         try {

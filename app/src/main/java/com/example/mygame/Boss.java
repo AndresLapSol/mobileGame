@@ -74,7 +74,19 @@ public class Boss {
         }
     }
 
+    public void reset() {
+        isActive = false;
+        isDefeated = false;
+        isInPosition = false;
+        health = 5; // Reiniciar la vida
+        y = -bitmap.getHeight(); // Reiniciar la posición Y
+        x = screenX / 2 - bitmap.getWidth() / 2; // Reiniciar la posición X
+        movingRight = true; // Reiniciar la dirección del movimiento
+        Log.d("Boss", "Boss reiniciado");
+    }
+
     public void activate() {
+        reset(); // Reiniciar el estado del Boss antes de activarlo
         isActive = true;
         isInPosition = false; // Cambiar isInPosition a false
         y = -bitmap.getHeight(); // Cambiar y a -bitmap.getHeight()

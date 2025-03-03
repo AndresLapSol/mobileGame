@@ -2,25 +2,64 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/black"
-    android:gravity="center">
+    android:padding="16dp"
+    android:background="@color/black">
 
+    <!-- Texto para mostrar los enemigos derrotados -->
     <TextView
-        android:id="@+id/gameOverText"
+        android:id="@+id/enemiesDefeatedTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Game Over"
-        android:textSize="40sp"
+        android:text="Enemigos derrotados: 0"
         android:textColor="@color/white"
-        android:layout_centerInParent="true"/>
+        android:textSize="24sp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="50dp"/>
 
+    <!-- Texto para mostrar los bosses derrotados -->
+    <TextView
+        android:id="@+id/bossesDefeatedTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Bosses derrotados: 0"
+        android:textColor="@color/white"
+        android:textSize="24sp"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/enemiesDefeatedTextView"
+        android:layout_marginTop="20dp"/>
+
+    <!-- Texto para mostrar el tiempo sobrevivido -->
+    <TextView
+        android:id="@+id/timeSurvivedTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Tiempo sobrevivido: 00:00"
+        android:textColor="@color/white"
+        android:textSize="24sp"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/bossesDefeatedTextView"
+        android:layout_marginTop="20dp"/>
+
+    <!-- Botón para reiniciar el juego -->
     <Button
         android:id="@+id/restartButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Reiniciar"
-        android:layout_below="@id/gameOverText"
+        android:textSize="18sp"
         android:layout_centerHorizontal="true"
+        android:layout_below="@id/timeSurvivedTextView"
+        android:layout_marginTop="50dp"/>
+
+    <!-- Botón para volver al menú -->
+    <Button
+        android:id="@+id/menuButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Menú"
+        android:textSize="18sp"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/restartButton"
         android:layout_marginTop="20dp"/>
 
 </RelativeLayout>
