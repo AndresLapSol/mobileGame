@@ -19,5 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
+
 rootProject.name = "myGame"
 include(":app")

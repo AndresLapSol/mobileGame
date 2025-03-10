@@ -4,12 +4,10 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
-
 import androidx.appcompat.app.AppCompatActivity;
 
-public class MenuActivity extends AppCompatActivity implements View.OnClickListener{
+public class MenuActivity extends AppCompatActivity implements View.OnClickListener {
 
-    //image button
     private Button buttonPlay;
 
     @Override
@@ -17,17 +15,18 @@ public class MenuActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        setupUI();
+    }
 
-        //señalando el button
-        buttonPlay = (Button) findViewById(R.id.buttonPlay);
-
-        //click listener
+    private void setupUI() {
+        buttonPlay = findViewById(R.id.buttonPlay);
         buttonPlay.setOnClickListener(this);
     }
 
     @Override
     public void onClick(View v) {
-        //Empezar GameActivity
-        startActivity(new Intent(this, GameActivity.class));
+        if (v.getId() == R.id.buttonPlay) {
+            startActivity(new Intent(this, GameActivity.class));
+        }
     }
 }

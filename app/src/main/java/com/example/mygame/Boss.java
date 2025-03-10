@@ -16,7 +16,8 @@ public class Boss {
     private boolean isInPosition; // Indica si el Boss ha llegado a su posición final
     private Rect detectCollision;
     private boolean movingRight; // Dirección del movimiento
-    private int health; // Vida del Boss
+    private int health; // Vida actual del Boss
+    private int maxHealth; // Vida máxima del Boss
 
     public Boss(Context context, int screenX, int screenY) {
         Log.d("Boss", "Constructor ejecutado");
@@ -42,10 +43,11 @@ public class Boss {
         originalBitmap.recycle(); // Liberar la memoria del bitmap original
         x = screenX / 2 - bitmap.getWidth() / 2;
         y = -bitmap.getHeight();
-        detectCollision = new Rect(x, y, bitmap.getWidth(), bitmap.getHeight());
+        detectCollision = new Rect(x, y, x + bitmap.getWidth(), y + bitmap.getHeight());
         isActive = false;
         isInPosition = false;
-        health = 5;
+        health = 5; // Vida inicial
+        maxHealth = 5; // Vida máxima inicial
         isDefeated = false;
         speed = 5; // Inicializar la variable speed
     }
@@ -78,21 +80,20 @@ public class Boss {
         isActive = false;
         isDefeated = false;
         isInPosition = false;
-        health = 5; // Reiniciar la vida
+        health = maxHealth; // Reiniciar la vida al máximo
         y = -bitmap.getHeight(); // Reiniciar la posición Y
         x = screenX / 2 - bitmap.getWidth() / 2; // Reiniciar la posición X
         movingRight = true; // Reiniciar la dirección del movimiento
         Log.d("Boss", "Boss reiniciado");
     }
 
-    public void activate() {
-        reset(); // Reiniciar el estado del Boss antes de activarlo
+    public void activate(int maxHealth) {
+        this.maxHealth = maxHealth;
+        this.health = maxHealth;
         isActive = true;
         isInPosition = false; // Cambiar isInPosition a false
         y = -bitmap.getHeight(); // Cambiar y a -bitmap.getHeight()
-        Log.d("Boss", "Boss activado, isActive: " + isActive + ", isInPosition: " + isInPosition);
-        System.out.println("Boss activado");
-        Log.d("Boss", "Boss activado");
+        Log.d("Boss", "Boss activado con " + maxHealth + " vidas, isActive: " + isActive + ", isInPosition: " + isInPosition);
     }
 
     public boolean isActive() {
@@ -128,7 +129,7 @@ public class Boss {
         }
 
         if (isInPosition) { // Solo recibir daño si ya llegó a su posición
-            if(health > 0){
+            if (health > 0) {
                 health--;
                 System.out.println("Boss recibió daño, vida restante: " + health);
             }
@@ -154,4 +155,7 @@ public class Boss {
         return health;
     }
 
+    public int getMaxHealth() {
+        return maxHealth;
+    }
 }

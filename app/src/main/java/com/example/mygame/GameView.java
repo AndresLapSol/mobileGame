@@ -1,5 +1,6 @@
 package com.example.mygame;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Canvas;
@@ -23,35 +24,47 @@ public class GameView extends SurfaceView implements Runnable {
     private Enemy[] enemies;
     private int enemyCount = 3;
     private ArrayList<Star> stars = new ArrayList<>();
-    private ArrayList<Bullet> bullets = new ArrayList<>(); // Lista de balas activas
-    private long lastShotTime = 0; // Tiempo del último disparo
-    private static final long SHOT_INTERVAL = 500; // Intervalo de disparo en milisegundos (500 ms = 0.5 segundos)
+    private ArrayList<Bullet> bullets = new ArrayList<>();
+    private long lastShotTime = 0;
+    private static final long SHOT_INTERVAL = 500; // Intervalo de disparo en ms
     private long tiempoInicio;
 
-    // Definir el objeto "explosion"
+    // Objeto Explosion
     private Boom boom;
 
-    // Definir el objeto "Boss"
+    // Objeto Boss
     private Boss boss;
 
-    // Variables para contar enemigos y bosses derrotados
+    // Contadores de enemigos y Boss derrotados
     private int enemiesDefeated = 0;
     private int bossesDefeated = 0;
 
-    private ArrayList<Integer> bossActivationTimes; // Lista de tiempos de activación del Boss (en segundos)
-    private int currentBossActivationIndex = 0; // Índice para rastrear el próximo tiempo de activación
+    private Paint backgroundPaint;
+
+    private ArrayList<Integer> bossActivationTimes; // Tiempos de activación (en segundos)
+    private int currentBossActivationIndex = 0;
+
+    // Variables para la transición del fondo
+    private int currentBackgroundColor = Color.BLACK;
+    private int targetBackgroundColor = Color.BLACK;
+    private long transitionStartTime = 0;
+    private static final long TRANSITION_DURATION = 1000; // Duración de la transición en ms
 
     public GameView(Context context, int screenX, int screenY, GameActivity gameActivity) {
         super(context);
 
-        tiempoInicio = System.currentTimeMillis(); // Guarda el tiempo de inicio
+        // Inicializar el Paint para el fondo
+        backgroundPaint = new Paint();
+        backgroundPaint.setColor(Color.BLACK);
+
+        tiempoInicio = System.currentTimeMillis();
         Log.d("GameView", "tiempoInicio: " + tiempoInicio);
 
         // Inicializar la lista de tiempos de activación del Boss (en segundos)
         bossActivationTimes = new ArrayList<>();
-        bossActivationTimes.add(10);  // Segundo 10
-        bossActivationTimes.add(30); // Segundo 30
-        bossActivationTimes.add(50); // Segundo 50
+        bossActivationTimes.add(10);  // Primer Boss a los 10 segundos
+        bossActivationTimes.add(30);  // Segundo Boss a los 30 segundos
+        bossActivationTimes.add(50);  // Tercer Boss a los 50 segundos
 
         player = new Player(context, screenX, screenY);
         surfaceHolder = getHolder();
@@ -73,8 +86,8 @@ public class GameView extends SurfaceView implements Runnable {
         // Inicializar Explosion
         boom = new Boom(context);
 
-        // Inicializar el BOSS
-        boss = new Boss(context, screenX, screenY); // Asegúrate de agregar esto aquí
+        // Inicializar Boss
+        boss = new Boss(context, screenX, screenY);
     }
 
     @Override
@@ -87,19 +100,47 @@ public class GameView extends SurfaceView implements Runnable {
         }
     }
 
+    // Inicia una transición suave al color objetivo
+    private void startBackgroundTransition(int targetColor) {
+        currentBackgroundColor = backgroundPaint.getColor(); // Color actual
+        targetBackgroundColor = targetColor; // Color al que se quiere llegar
+        transitionStartTime = System.currentTimeMillis(); // Inicia la transición
+    }
+
+    // Actualiza el color de fondo interpolando entre el color actual y el objetivo
+    private void updateBackgroundColor() {
+        if (transitionStartTime > 0) {
+            long elapsedTime = System.currentTimeMillis() - transitionStartTime;
+            float fraction = (float) elapsedTime / TRANSITION_DURATION;
+
+            if (fraction >= 1.0f) {
+                // Finaliza la transición
+                backgroundPaint.setColor(targetBackgroundColor);
+                transitionStartTime = 0;
+            } else {
+                // Interpolación lineal entre colores
+                int red = (int) (Color.red(currentBackgroundColor) + fraction * (Color.red(targetBackgroundColor) - Color.red(currentBackgroundColor)));
+                int green = (int) (Color.green(currentBackgroundColor) + fraction * (Color.green(targetBackgroundColor) - Color.green(currentBackgroundColor)));
+                int blue = (int) (Color.blue(currentBackgroundColor) + fraction * (Color.blue(targetBackgroundColor) - Color.blue(currentBackgroundColor)));
+                backgroundPaint.setColor(Color.rgb(red, green, blue));
+            }
+        }
+    }
+
     private void update() {
-        Log.d("GameView", "update ejecutado");
+        updateBackgroundColor();
+
         player.update();
 
-        // Poniendo la explosion fuera de la pantalla
+        // Mover la explosión fuera de la pantalla
         boom.setX(-250);
         boom.setY(-250);
 
-        // Disparar balas constantemente
+        // Disparo automático de balas
         long currentTime = System.currentTimeMillis();
         if (currentTime - lastShotTime >= SHOT_INTERVAL) {
-            bullets.add(player.shoot(getContext())); // Disparar una nueva bala
-            lastShotTime = currentTime; // Actualizar el tiempo del último disparo
+            bullets.add(player.shoot(getContext()));
+            lastShotTime = currentTime;
         }
 
         // Actualizar balas
@@ -108,59 +149,64 @@ public class GameView extends SurfaceView implements Runnable {
             if (bullet.isActive()) {
                 bullet.update();
             } else {
-                bullets.remove(i); // Eliminar balas inactivas
+                bullets.remove(i);
                 i--;
             }
         }
 
         float speedMultiplier = getSpeedMultiplier();
+
         // Actualizar enemigos
         for (int i = 0; i < enemies.length; i++) {
             if (enemies[i].isActive()) {
                 enemies[i].update(speedMultiplier);
             } else {
-                // Si el enemigo está inactivo, puedes eliminarlo o reiniciarlo
                 enemies[i] = new Enemy(getContext(), getWidth(), getHeight());
             }
         }
 
-        // **Actualizar Boss**
-        if (boss != null && boss.isActive() && !boss.isDefeated()) { // Comprobar si el boss esta derrotado
+        // Actualizar Boss y verificar colisiones con balas
+        if (boss != null && boss.isActive() && !boss.isDefeated()) {
             boss.update();
             Log.d("GameView", "boss.isActive");
 
-            // Verificar colisiones entre balas y el Boss
             for (int i = 0; i < bullets.size(); i++) {
                 Bullet bullet = bullets.get(i);
                 if (bullet.isActive() && Rect.intersects(bullet.getDetectCollision(), boss.getDetectCollision())) {
-                    bullet.setInactive(); // Desactivar la bala
-                    boss.takeDamage(); // Reducir la vida del Boss
-
-                    // Mover la explosión al sitio de colisión
+                    bullet.setInactive();
+                    boss.takeDamage();
+                    // Posicionar la explosión en la colisión
                     boom.setX(boss.getX());
                     boom.setY(boss.getY());
 
                     if (boss.getHealth() <= 0) {
-                        // El Boss ha sido derrotado
-                        boss.setInactive(); // Desactivar al Boss
-                        bossesDefeated++; // Incrementar el contador de bosses derrotados
+                        boss.setInactive();
+                        bossesDefeated++;
                         Log.d("GameView", "Boss derrotado");
+                        // Si ya se han activado todos los Boss (el tercer Boss) se lanza WinActivity
+                        if (currentBossActivationIndex >= bossActivationTimes.size()) {
+                            Intent winIntent = new Intent(getContext(), WinActivity.class);
+                            winIntent.putExtra("enemiesDefeated", enemiesDefeated);
+                            winIntent.putExtra("timeSurvived", (System.currentTimeMillis() - tiempoInicio) / 1000);
+                            getContext().startActivity(winIntent);
+                            // Finaliza el GameActivity para evitar actualizaciones o colisiones posteriores
+                            ((Activity) getContext()).finish();
+                            return; // Salir para evitar más actualizaciones
+                        }
                     }
-                    break; // Salir del bucle de balas para esta colisión
                 }
             }
         }
 
-        // Verificar colisión entre el jugador y un enemigo
+        // Verificar colisiones entre jugador y enemigos
         for (int i = 0; i < enemies.length; i++) {
             if (enemies[i].isActive() && Rect.intersects(player.getDetectCollision(), enemies[i].getDetectCollision())) {
-                // Iniciar la actividad de Game Over
                 Intent gameOverIntent = new Intent(getContext(), GameOverActivity.class);
                 gameOverIntent.putExtra("enemiesDefeated", enemiesDefeated);
                 gameOverIntent.putExtra("bossesDefeated", bossesDefeated);
                 gameOverIntent.putExtra("timeSurvived", (System.currentTimeMillis() - tiempoInicio) / 1000);
                 getContext().startActivity(gameOverIntent);
-                return; // Salir del método update para evitar más actualizaciones
+                return;
             }
         }
 
@@ -170,43 +216,56 @@ public class GameView extends SurfaceView implements Runnable {
             if (bullet.isActive()) {
                 for (int j = 0; j < enemies.length; j++) {
                     if (enemies[j].isActive() && Rect.intersects(bullet.getDetectCollision(), enemies[j].getDetectCollision())) {
-                        // Colisión detectada: desactivar la bala y el enemigo
                         bullet.setInactive();
                         enemies[j].setInactive();
-                        enemiesDefeated++; // Incrementar el contador de enemigos derrotados
-
-                        // Mover la explosion al sitio de colision
+                        enemiesDefeated++;
                         boom.setX(enemies[j].getX());
                         boom.setY(enemies[j].getY());
-
-                        break; // Salir del bucle de enemigos para esta bala
+                        break;
                     }
                 }
             }
         }
 
-        // Verificar colisión entre el jugador y un enemigo
+        // Comprobación extra de colisiones entre jugador y enemigos
         for (int i = 0; i < enemies.length; i++) {
             if (enemies[i].isActive() && Rect.intersects(player.getDetectCollision(), enemies[i].getDetectCollision())) {
-                // Iniciar la actividad de Game Over
                 Intent gameOverIntent = new Intent(getContext(), GameOverActivity.class);
                 gameOverIntent.putExtra("enemiesDefeated", enemiesDefeated);
                 gameOverIntent.putExtra("bossesDefeated", bossesDefeated);
                 gameOverIntent.putExtra("timeSurvived", (System.currentTimeMillis() - tiempoInicio) / 1000);
                 getContext().startActivity(gameOverIntent);
-                return; // Salir del método update para evitar más actualizaciones
+                return;
             }
         }
 
-        // Verificar si es hora de activar al Boss
-        long tiempoJugado = (System.currentTimeMillis() - tiempoInicio) / 1000; // Convierte a segundos
+        // Activación del Boss según el tiempo jugado
+        long tiempoJugado = (System.currentTimeMillis() - tiempoInicio) / 1000;
         Log.d("GameView", "Tiempo jugado: " + tiempoJugado);
+
         if (currentBossActivationIndex < bossActivationTimes.size()) {
             int nextActivationTime = bossActivationTimes.get(currentBossActivationIndex);
             if (tiempoJugado >= nextActivationTime && !boss.isActive()) {
-                boss.activate(); // Reiniciar y activar al Boss
-                currentBossActivationIndex++; // Pasar al siguiente tiempo de activación
-                Log.d("GameView", "Boss activado en el segundo: " + nextActivationTime);
+                // Si el Boss fue derrotado previamente, se crea una nueva instancia para permitir la reactivación
+                if (boss.isDefeated()) {
+                    boss = new Boss(getContext(), getWidth(), getHeight());
+                }
+                switch (currentBossActivationIndex) {
+                    case 0: // Primer Boss
+                        startBackgroundTransition(Color.BLACK);
+                        boss.activate(5);
+                        break;
+                    case 1: // Segundo Boss
+                        startBackgroundTransition(Color.parseColor("#4B0082")); // Morado oscuro
+                        boss.activate(10);
+                        break;
+                    case 2: // Tercer Boss
+                        startBackgroundTransition(Color.parseColor("#8B0000")); // Rojo oscuro
+                        boss.activate(20);
+                        break;
+                }
+                currentBossActivationIndex++;
+                Log.d("GameView", "Boss activado en: " + nextActivationTime + "s");
             }
         }
     }
@@ -214,7 +273,7 @@ public class GameView extends SurfaceView implements Runnable {
     private void draw() {
         if (surfaceHolder.getSurface().isValid()) {
             canvas = surfaceHolder.lockCanvas();
-            canvas.drawColor(Color.BLACK);
+            canvas.drawRect(0, 0, getWidth(), getHeight(), backgroundPaint);
 
             // Dibujar estrellas
             paint.setColor(Color.WHITE);
@@ -238,24 +297,18 @@ public class GameView extends SurfaceView implements Runnable {
                 }
             }
 
-            // Dibujar Explosion
-            canvas.drawBitmap(
-                    boom.getBitmap(),
-                    boom.getX(),
-                    boom.getY(),
-                    paint
-            );
+            // Dibujar explosión
+            canvas.drawBitmap(boom.getBitmap(), boom.getX(), boom.getY(), paint);
 
+            // Dibujar Boss si está activo
             if (boss.isActive()) {
                 canvas.drawBitmap(boss.getBitmap(), boss.getX(), boss.getY(), paint);
             }
 
-            // Calcular el tiempo jugado en segundos
+            // Mostrar el tiempo jugado en pantalla
             long tiempoJugado = (System.currentTimeMillis() - tiempoInicio) / 1000;
             long minutos = tiempoJugado / 60;
             long segundos = tiempoJugado % 60;
-
-            // Dibujar el tiempo en pantalla
             paint.setColor(Color.WHITE);
             paint.setTextSize(50);
             canvas.drawText("Tiempo: " + minutos + "m " + segundos + "s", 50, 100, paint);
@@ -266,7 +319,7 @@ public class GameView extends SurfaceView implements Runnable {
 
     private void control() {
         try {
-            gameThread.sleep(17); // ~60 FPS
+            gameThread.sleep(17); // Aproximadamente 60 FPS
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -293,23 +346,21 @@ public class GameView extends SurfaceView implements Runnable {
             case MotionEvent.ACTION_DOWN:
                 float touchX = motionEvent.getX();
                 float screenWidth = getWidth();
-
                 if (touchX < screenWidth / 2) {
-                    player.moveLeft(); // Mover a la izquierda
+                    player.moveLeft();
                 } else {
-                    player.moveRight(); // Mover a la derecha
+                    player.moveRight();
                 }
                 break;
-
             case MotionEvent.ACTION_UP:
-                player.stopMoving(); // Detener el movimiento cuando se suelta la pantalla
+                player.stopMoving();
                 break;
         }
         return true;
     }
 
     private float getSpeedMultiplier() {
-        long tiempoJugado = (System.currentTimeMillis() - tiempoInicio) / 1000; // Tiempo en segundos
-        return 1.0f + (tiempoJugado / 60.0f); // Aumenta la velocidad cada 30 segundos
+        long tiempoJugado = (System.currentTimeMillis() - tiempoInicio) / 1000;
+        return 1.0f + (tiempoJugado / 60.0f);
     }
 }

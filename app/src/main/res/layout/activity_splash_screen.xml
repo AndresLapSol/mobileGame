@@ -7,30 +7,37 @@
     android:layout_height="match_parent"
     tools:context=".SplashScreen">
 
+    <!-- Logo -->
     <ImageView
         android:id="@+id/imageView3"
-        android:layout_width="113dp"
-        android:layout_height="356dp"
-        android:layout_marginEnd="148dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:scaleType="fitCenter"
+        app:srcCompat="@drawable/logo_a"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.392"
-        app:srcCompat="@drawable/logo_a" />
+        app:layout_constraintBottom_toTopOf="@id/textView"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintWidth_percent="0.3"
+        app:layout_constraintHeight_percent="0.4"
+        android:layout_marginBottom="16dp" />
 
+    <!-- Texto -->
     <TextView
         android:id="@+id/textView"
-        android:layout_width="243dp"
-        android:layout_height="116dp"
-        android:layout_marginEnd="84dp"
-        android:fontFamily="@font/almendra_display"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
         android:text="Andrew Productions"
         android:textAlignment="center"
-        android:textSize="48sp"
+        android:textSize="36sp"
         android:textStyle="bold"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:fontFamily="@font/almendra_display"
+        app:layout_constraintTop_toBottomOf="@id/imageView3"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.58" />
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_marginTop="16dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginEnd="32dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
