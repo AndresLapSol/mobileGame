@@ -39,6 +39,7 @@ public class WinActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Intent restartIntent = new Intent(WinActivity.this, GameActivity.class);
+                restartIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(restartIntent);
                 finish(); // Cerrar la actividad actual
             }

@@ -15,6 +15,7 @@ public class Enemy {
     private int maxX, minX, maxY, minY;
     private Rect detectCollision;
     private boolean isActive; // Nuevo campo para rastrear si el enemigo está activo
+    private int collisionMargin = 15;  // Margen para reducir la hitbox uniformemente
 
     public Enemy(Context context, int screenX, int screenY) {
         bitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.devil80);
@@ -28,7 +29,13 @@ public class Enemy {
         x = screenX;
         y = generator.nextInt(maxY) - bitmap.getHeight();
 
-        detectCollision = new Rect(x, y, x + bitmap.getWidth(), y + bitmap.getHeight());
+        // Inicializar detectCollision aplicando el margen en todos los lados
+        detectCollision = new Rect(
+                x + collisionMargin,
+                y + collisionMargin,
+                x + bitmap.getWidth() - collisionMargin,
+                y + bitmap.getHeight() - collisionMargin
+        );
         isActive = true; // El enemigo está activo por defecto
     }
 
@@ -42,10 +49,11 @@ public class Enemy {
             x = generator.nextInt(maxX - bitmap.getWidth());
         }
 
-        detectCollision.left = x;
-        detectCollision.top = y;
-        detectCollision.right = x + bitmap.getWidth();
-        detectCollision.bottom = y + bitmap.getHeight();
+        // Actualizar la hitbox con el margen aplicado en todos los lados
+        detectCollision.left = x + collisionMargin;
+        detectCollision.top = y + collisionMargin;
+        detectCollision.right = x + bitmap.getWidth() - collisionMargin;
+        detectCollision.bottom = y + bitmap.getHeight() - collisionMargin;
     }
 
     public void setX(int x) {

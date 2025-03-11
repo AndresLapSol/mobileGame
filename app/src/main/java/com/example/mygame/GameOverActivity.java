@@ -7,6 +7,10 @@ import android.widget.Button;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.MobileAds;
+
 public class GameOverActivity extends AppCompatActivity {
 
     private TextView enemiesDefeatedTextView;
@@ -14,11 +18,17 @@ public class GameOverActivity extends AppCompatActivity {
     private TextView timeSurvivedTextView;
     private Button restartButton;
     private Button menuButton;
+    private AdView adView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_game_over);
+
+        adView = findViewById(R.id.adView);
+        MobileAds.initialize(this, initializationStatus -> {});
+        AdRequest adRequest = new AdRequest.Builder().build();
+        adView.loadAd(adRequest);
 
         // Obtener los datos del Intent
         Intent intent = getIntent();
@@ -53,6 +63,7 @@ public class GameOverActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Intent menuIntent = new Intent(GameOverActivity.this, MenuActivity.class);
+                menuIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(menuIntent);
                 finish(); // Cerrar la actividad actual
             }
