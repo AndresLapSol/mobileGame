@@ -12,6 +12,8 @@ import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import java.util.ArrayList;
+import android.media.MediaPlayer;
+
 
 public class GameView extends SurfaceView implements Runnable {
 
@@ -50,8 +52,17 @@ public class GameView extends SurfaceView implements Runnable {
     private long transitionStartTime = 0;
     private static final long TRANSITION_DURATION = 1000; // Duración de la transición en ms
 
+    private MediaPlayer bossSound;
+
+    private MediaPlayer backgroundMusic;  // Objeto para la música de fondo
+
+
     public GameView(Context context, int screenX, int screenY, GameActivity gameActivity) {
         super(context);
+
+        // Inicializar el MediaPlayer con el archivo de música (asegúrate de tener my_music.mp3 en res/raw)
+        backgroundMusic = MediaPlayer.create(context, R.raw.musica_main);
+        backgroundMusic.setLooping(true);  // Reproduce en bucle
 
         // Inicializar el Paint para el fondo
         backgroundPaint = new Paint();
@@ -253,15 +264,21 @@ public class GameView extends SurfaceView implements Runnable {
                 switch (currentBossActivationIndex) {
                     case 0: // Primer Boss
                         startBackgroundTransition(Color.BLACK);
+                        bossSound = MediaPlayer.create(getContext(), R.raw.boss_sound);
                         boss.activate(5);
+                        bossSound.start();
                         break;
                     case 1: // Segundo Boss
                         startBackgroundTransition(Color.parseColor("#4B0082")); // Morado oscuro
+                        bossSound = MediaPlayer.create(getContext(), R.raw.boss_sound);
                         boss.activate(10);
+                        bossSound.start();
                         break;
                     case 2: // Tercer Boss
                         startBackgroundTransition(Color.parseColor("#8B0000")); // Rojo oscuro
+                        bossSound = MediaPlayer.create(getContext(), R.raw.boss_sound);
                         boss.activate(20);
+                        bossSound.start();
                         break;
                 }
                 currentBossActivationIndex++;
@@ -332,12 +349,22 @@ public class GameView extends SurfaceView implements Runnable {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+
+        // Pausa la música de fondo si se está reproduciendo
+        if (backgroundMusic != null && backgroundMusic.isPlaying()) {
+            backgroundMusic.pause();
+        }
     }
 
     public void resume() {
         playing = true;
         gameThread = new Thread(this);
         gameThread.start();
+
+        // Inicia la música de fondo si no se está reproduciendo
+        if (backgroundMusic != null && !backgroundMusic.isPlaying()) {
+            backgroundMusic.start();
+        }
     }
 
     @Override
