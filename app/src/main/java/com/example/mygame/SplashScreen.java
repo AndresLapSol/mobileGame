@@ -6,6 +6,8 @@ import android.os.Handler;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.mygame.Activity.MenuActivity;
+
 public class SplashScreen extends AppCompatActivity {
 
     @Override

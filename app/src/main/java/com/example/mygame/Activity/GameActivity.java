@@ -1,8 +1,10 @@
-package com.example.mygame;
+package com.example.mygame.Activity;
 
 import android.content.Intent;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.example.mygame.GameView;
 
 
 public class GameActivity extends AppCompatActivity {

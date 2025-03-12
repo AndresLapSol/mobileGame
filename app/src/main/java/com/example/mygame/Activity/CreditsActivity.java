@@ -1,9 +1,10 @@
-package com.example.mygame;
+package com.example.mygame.Activity;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.example.mygame.R;
 
 public class CreditsActivity extends AppCompatActivity implements View.OnClickListener {
 

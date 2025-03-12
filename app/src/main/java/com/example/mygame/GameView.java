@@ -14,6 +14,16 @@ import android.view.SurfaceView;
 import java.util.ArrayList;
 import android.media.MediaPlayer;
 
+import com.example.mygame.Activity.GameActivity;
+import com.example.mygame.Activity.GameOverActivity;
+import com.example.mygame.Activity.WinActivity;
+import com.example.mygame.Models.Boom;
+import com.example.mygame.Models.Boss;
+import com.example.mygame.Models.Bullet;
+import com.example.mygame.Models.Enemy;
+import com.example.mygame.Models.Player;
+import com.example.mygame.Models.Star;
+
 
 public class GameView extends SurfaceView implements Runnable {
 

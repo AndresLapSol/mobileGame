@@ -1,8 +1,10 @@
-package com.example.mygame;
+package com.example.mygame.Models;
 
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+
+import com.example.mygame.R;
 
 public class Boom {
 

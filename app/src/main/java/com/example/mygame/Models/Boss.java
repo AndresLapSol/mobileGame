@@ -1,10 +1,12 @@
-package com.example.mygame;
+package com.example.mygame.Models;
 
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Rect;
 import android.util.Log;
+
+import com.example.mygame.R;
 
 public class Boss {
     private Bitmap bitmap;

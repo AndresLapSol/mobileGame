@@ -1,9 +1,11 @@
-package com.example.mygame;
+package com.example.mygame.Models;
 
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Rect;
+
+import com.example.mygame.R;
 
 public class Bullet {
     private Bitmap bitmap;
